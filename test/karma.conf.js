@@ -17,5 +17,6 @@ module.exports = function (config) {
     autoWatch: false,
     singleRun: true, // Karma captures browsers, runs the tests and exits
     concurrency: Infinity,
+    plugins: ["karma-mocha", "karma-spec-reporter", "karma-chrome-launcher", "karma-sinon-chai"],
   });
 };
