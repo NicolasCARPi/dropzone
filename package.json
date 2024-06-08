@@ -43,7 +43,7 @@
     "css": "yarn sass src/:dist/ --style compressed",
     "watch-css": "yarn sass src/:dist/ --watch --style compressed",
     "test": "karma start test/karma.conf.js",
-    "test:e2e": "yarn run cypress:run",
+    "test:e2e": "yarn run cypress run",
     "start-test-server": "node test/test-server.js"
   },
   "bugs": {
