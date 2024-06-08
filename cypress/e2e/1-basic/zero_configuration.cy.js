@@ -8,8 +8,8 @@ describe("Dropzone with zero configuration", () => {
   it("uploads single file", () => {
     cy.intercept("POST", "/").as("upload");
 
-    cy.get(".dropzone").attachFile("image.jpg", {
-      subjectType: "drag-n-drop",
+    cy.get(".dropzone").selectFile("cypress/fixtures/image.jpg", {
+      action: "drag-drop",
     });
 
     cy.wait("@upload").then((interception) => {
@@ -24,8 +24,8 @@ describe("Dropzone with zero configuration", () => {
     cy.intercept("POST", "/").as("upload");
 
     cy.get(".dropzone")
-      .attachFile("image.jpg", { subjectType: "drag-n-drop" })
-      .attachFile("image.tiff", { subjectType: "drag-n-drop" })
+      .selectFile("cypress/fixtures/image.jpg", { action: "drag-drop" })
+      .selectFile("cypress/fixtures/image.tiff", { action: "drag-drop" })
 
     cy.wait("@upload").then((interception) => {
       expect(interception.response.statusCode).to.eq(200);

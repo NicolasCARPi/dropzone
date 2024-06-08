@@ -15,8 +15,8 @@ describe("Dropzone with zero configuration", () => {
     ).as("upload");
     cy.intercept("POST", "/amazon-complete").as("complete");
 
-    cy.get(".dropzone").attachFile("image.jpg", {
-      subjectType: "drag-n-drop",
+    cy.get(".dropzone").selectFile("cypress/fixtures/image.jpg", {
+      action: "drag-drop",
     });
     let remainingSize = imageSize;
     let partEtags = [];

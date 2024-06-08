@@ -87,7 +87,6 @@ __metadata:
     "@swc/helpers": "npm:^0.5.11"
     chai: "npm:^4.4.1"
     cypress: "npm:^13.11.0"
-    cypress-file-upload: "npm:^5.0.8"
     express: "npm:^4.19.2"
     karma: "npm:^6.4.3"
     karma-chrome-launcher: "npm:^3.2.0"
@@ -2232,15 +2231,6 @@ __metadata:
   version: 1.0.1
   resolution: "custom-event@npm:1.0.1"
   checksum: 10c0/86cd8497328b1e17dcda894c8df34a73b7a99f915123940d39b33c709482b2d3a2e689cd5e79e4775eb4167227689f57a2ae2f99a3f0bc9c54c0ac1b06853bd5
-  languageName: node
-  linkType: hard
-
-"cypress-file-upload@npm:^5.0.8":
-  version: 5.0.8
-  resolution: "cypress-file-upload@npm:5.0.8"
-  peerDependencies:
-    cypress: ">3.0.0"
-  checksum: 10c0/881a4d9cc16fbf5fd3efc69e1cfa65dd4036c747e2d0e9b7cf32f7f5bb5a137abfd7ce08bd3b7cf802e5d214c0036eabe4e116ccac162445e51e930656375310
   languageName: node
   linkType: hard
 
