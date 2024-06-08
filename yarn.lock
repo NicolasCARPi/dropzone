@@ -81,6 +81,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@deltablot/dropzone@workspace:."
   dependencies:
+    "@parcel/core": "npm:^2.12.0"
     "@parcel/transformer-inline-string": "npm:^2.0.0"
     "@parcel/transformer-sass": "npm:^2.0.0"
     "@swc/helpers": "npm:^0.5.11"
@@ -337,7 +338,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@parcel/core@npm:2.12.0":
+"@parcel/core@npm:2.12.0, @parcel/core@npm:^2.12.0":
   version: 2.12.0
   resolution: "@parcel/core@npm:2.12.0"
   dependencies:
