@@ -32,6 +32,7 @@ jobs:
           install-command : yarn install --immutable --immutable-cache
           # fix issue with "Cannot find module 'cypress'"
           # https://github.com/cypress-io/github-action/issues/430#issuecomment-949936528
+          command: yarn test:e2e
           command-prefix: yarn dlx
           start: yarn start-test-server
           wait-on: "http://localhost:8888"
