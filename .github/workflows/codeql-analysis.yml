@@ -31,6 +31,9 @@ jobs:
         languages: ${{ matrix.language }}
         paths: src
 
+    - name: Enable Corepack
+      run: corepack enable
+
     - name: Install dependencies
       run: yarn install
 

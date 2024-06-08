@@ -14,6 +14,8 @@ jobs:
           node-version: '20.x'
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
+      - name: Enable Corepack
+        run: corepack enable
       - name: Install dependencies
         run: yarn install
       - name: Build dist files
