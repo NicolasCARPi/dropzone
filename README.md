@@ -32,6 +32,8 @@ Install:
 $ npm install --save @deltablot/dropzone
 # or with yarn:
 $ yarn add @deltablot/dropzone
+# or with bun:
+$ bun add @deltablot/dropzone
 ```
 
 First argument is an element to bind to, second argument is the [`options`](./src/options.js) object.
@@ -54,6 +56,14 @@ const dropzone = new Dropzone("#elementId", { url: "/file/post" });
 bundlers](https://github.com/dropzone/dropzone-examples)
 
 Note: this library must be used in a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (works only over HTTPS or locally).
+
+<hr>
+
+**CSS**
+ 
+```css
+@import "@deltablot/dropzone/src/dropzone";
+```
 
 ## Not using a package manager or bundler?
 
