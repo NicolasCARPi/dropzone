@@ -422,12 +422,20 @@ export default class Dropzone extends Emitter {
   }
 
   // If @options.renameFile is a function,
-  // the function will be used to rename the file.name before appending it to the formData
+  // the function will be used to rename the file.name before appending it to the formData.
+  // MacOS 14+ screenshots contain narrow non-breaking space (U+202F) characters in filenames 
+  // (e.g., "Screenshot 2024-01-30 at 10.32.07 AM.png" where the space after "07" and before "AM" is U+202F).
+  // This function now replaces these with regular spaces to prevent upload issues and maintain compatibility with MacOS
   _renameFile(file) {
+    const cleanFile = {
+      ...file,
+      name: file.name.replace(/\u202F/g, ' ')
+    };
+    
     if (typeof this.options.renameFile !== "function") {
-      return file.name;
+      return cleanFile.name;
     }
-    return this.options.renameFile(file);
+    return this.options.renameFile(cleanFile);
   }
 
   // Returns a form that can be used as fallback if the browser does not support DragnDrop
