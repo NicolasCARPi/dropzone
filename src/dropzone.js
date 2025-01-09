@@ -279,13 +279,14 @@ export default class Dropzone extends Emitter {
 
     // Emit a `queuecomplete` event if all files finished uploading.
     this.on("complete", (file) => {
-      if (
+      const _queue_check = () =>
         this.getAddedFiles().length === 0 &&
         this.getUploadingFiles().length === 0 &&
-        this.getQueuedFiles().length === 0
-      ) {
+        this.getQueuedFiles().length === 0;
+      if (_queue_check()) {
         // This needs to be deferred so that `queuecomplete` really triggers after `complete`
-        return setTimeout(() => this.emit("queuecomplete"), 0);
+        // delay 1s and re-check to be sure additional uploads have not been queued after 1st one
+        return setTimeout(() => { if (_queue_check()) this.emit("queuecomplete"); }, 1000);
       }
     });
 
