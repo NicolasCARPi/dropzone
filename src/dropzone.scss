@@ -210,8 +210,10 @@
       .dz-image {
         // opacity: 0.8;
         img {
-          transform: scale(1.05, 1.05); // Getting rid of that white bleed-in
-          filter: blur(8px); // Getting rid of that white bleed-in
+          // Getting rid of that white bleed-in
+          transform: scale(1.05, 1.05);
+          // Getting rid of that white bleed-in
+          filter: blur(8px);
         }
       }
     }
