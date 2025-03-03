@@ -43,6 +43,7 @@ export default class Dropzone extends Emitter {
       "maxfilesexceeded",
       "maxfilesreached",
       "queuecomplete",
+      "emptyfolder",
     ];
 
     this.prototype._thumbnailQueue = [];
@@ -671,11 +672,13 @@ export default class Dropzone extends Emitter {
     let errorHandler = (error) =>
       __guardMethod__(console, "log", (o) => o.log(error));
 
+    let entryCount = 0;
     var readEntries = () => {
       return dirReader.readEntries((entries) => {
         if (entries.length > 0) {
           for (let entry of entries) {
             if (entry.isFile) {
+              ++entryCount;
               entry.file((file) => {
                 if (
                   this.options.ignoreHiddenFiles &&
@@ -695,6 +698,8 @@ export default class Dropzone extends Emitter {
           // the first 100 entries.
           // See: https://developer.mozilla.org/en-US/docs/Web/API/DirectoryReader#readEntries
           readEntries();
+        } else if (entryCount === 0) {
+          this.emit("emptyfolder", path);
         }
         return null;
       }, errorHandler);
