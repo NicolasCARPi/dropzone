@@ -779,6 +779,8 @@ let defaultOptions = {
   queuecomplete() {},
 
   addedfiles() {},
+
+  emptyfolder() {},
 };
 
 export default defaultOptions;
