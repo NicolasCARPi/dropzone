@@ -86,7 +86,7 @@ Use the standalone files like this:
 ---
 
 - [📚 Full documentation](https://docs.dropzone.dev)
-- [⚙️ `src/options.js`](https://github.com/NicolasCARPi/dropzone/blob/main/src/options.js)
+- [⚙️ `src/options.js`](https://github.com/NicolasCARPi/dropzone/blob/master/src/options.js)
   for all available options
 
 ---
