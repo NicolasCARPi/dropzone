@@ -633,10 +633,14 @@ let defaultOptions = {
         e.preventDefault();
         e.stopPropagation();
         if (file.status === Dropzone.UPLOADING) {
-          return Dropzone.confirm(
-            this.options.dictCancelUploadConfirmation,
-            () => this.removeFile(file)
-          );
+          if (this.options.dictCancelUploadConfirmation) {
+            return Dropzone.confirm(
+              this.options.dictCancelUploadConfirmation,
+              () => this.removeFile(file)
+            );
+          } else {
+            return this.removeFile(file);
+          }
         } else {
           if (this.options.dictRemoveFileConfirmation) {
             return Dropzone.confirm(
