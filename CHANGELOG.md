@@ -1,5 +1,15 @@
 # Changelog for dropzone
 
+## 7.3.1
+
+* bug/minor: ux: avoid displaying empty confirm on cancel action (by spatarel in #42)
+* doc: readme: fix broken link by AalbatrossGuy in #41
+
+## 7.3.0
+
+* Emit emptyfolder event when receiving an empty folder by @CyBot in #35
+* Fix for Issue #36 by @alloylab in #37
+
 ## 7.2.1
 
 * bug/minor: add null check to prevent uncaught type error on parent node (#34 by Christina Toegl)
