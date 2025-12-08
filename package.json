@@ -8,7 +8,7 @@
     "file upload",
     "upload"
   ],
-  "homepage": "https://www.dropzone.dev/js",
+  "homepage": "https://github.com/NicolasCARPi/dropzone",
   "source": "src/dropzone.js",
   "main": "dist/dropzone.js",
   "module": "dist/dropzone.mjs",

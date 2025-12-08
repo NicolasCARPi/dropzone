@@ -85,7 +85,7 @@ Use the standalone files like this:
 
 ---
 
-- [📚 Full documentation](https://docs.dropzone.dev)
+- [📚 Full documentation](https://doc.dropzone.deltablot.app)
 - [⚙️ `src/options.js`](https://github.com/NicolasCARPi/dropzone/blob/master/src/options.js)
   for all available options
 
