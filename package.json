@@ -42,8 +42,7 @@
     "build": "parcel build && yarn run css && cp types/dropzone.d.ts dist",
     "css": "yarn sass src/:dist/ --style compressed",
     "watch-css": "yarn sass src/:dist/ --watch --style compressed",
-    "test": "karma start test/karma.conf.js",
-    "test:e2e": "cypress run",
+    "test": "cypress run",
     "start-test-server": "yarn node test/test-server.js"
   },
   "bugs": {
@@ -61,9 +60,13 @@
     "tar": "7.5.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.6",
+    "@babel/preset-env": "^7.28.6",
+    "@cypress/webpack-preprocessor": "^7.0.2",
     "@parcel/core": "^2.16.3",
     "@parcel/transformer-inline-string": "^2.16.3",
     "@parcel/transformer-sass": "^2.16.3",
+    "babel-loader": "^10.0.0",
     "chai": "^4.5.0",
     "cypress": "^15.9.0",
     "express": "^4.21.2",
@@ -77,7 +80,8 @@
     "parcel": "^2.16.3",
     "sass": "^1.79.3",
     "sinon": "^18.0.1",
-    "sinon-chai": "^3.7.0"
+    "sinon-chai": "^3.7.0",
+    "webpack": "^5.104.1"
   },
   "packageManager": "yarn@4.5.3"
 }

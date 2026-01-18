@@ -9,6 +9,8 @@ _config.yaml
 dist
 .parcel-cache
 
+cypress/screenshots/
+
 # The GitLab pages artifacts
 public
 

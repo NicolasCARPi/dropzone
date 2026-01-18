@@ -88,10 +88,12 @@ export default class Dropzone extends Emitter {
       options != null ? options : {}
     );
 
+    /*
     this.options.previewTemplate = this.options.previewTemplate.replace(
-      /\n*/g,
+      /\n* /g,
       ""
     );
+*/
 
     // If the browser failed, just call the fallback and leave
     if (this.options.forceFallback || !Dropzone.isBrowserSupported()) {
