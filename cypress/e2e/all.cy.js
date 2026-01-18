@@ -15,8 +15,10 @@ describe("Dropzone", function () {
     return file;
   };
 
+  /*
   let xhr = null;
   beforeEach(() => (xhr = Cypress.sinon.useFakeXMLHttpRequest()));
+  */
 
   describe("constructor()", function () {
     let dropzone = null;
@@ -462,11 +464,13 @@ describe("Dropzone", function () {
   });
 
   describe("instance", function () {
+    let xhr;
     let element = null;
     let dropzone = null;
     let requests = null;
     beforeEach(function () {
       requests = [];
+      xhr = Cypress.sinon.useFakeXMLHttpRequest();
       xhr.onCreate = (xhr) => requests.push(xhr);
 
       element = Dropzone.createElement("<div></div>");
@@ -482,7 +486,7 @@ describe("Dropzone", function () {
     afterEach(function () {
       document.body.removeChild(element);
       dropzone.destroy();
-      return xhr.restore();
+      xhr.restore();
     });
 
     describe(".accept()", function () {
@@ -655,41 +659,51 @@ describe("Dropzone", function () {
         }, 10);
       });
 
-      it("should properly cancel all files with the same XHR if uploadMultiple is true", function (done) {
-        let mock1 = getMockFile();
-        let mock2 = getMockFile();
-        let mock3 = getMockFile();
+      it("should properly cancel all files with the same XHR if uploadMultiple is true", function () {
+        const mock1 = getMockFile();
+        const mock2 = getMockFile();
+        const mock3 = getMockFile();
 
         dropzone.accept = (file, done) => done();
 
-        // Making sure the file stays in the queue.
         dropzone.options.uploadMultiple = true;
         dropzone.options.parallelUploads = 3;
 
+        // Keep the shared XHR from completing (prevents SUCCESS race)
+        const sendStub = Cypress.sinon
+          .stub(window.XMLHttpRequest.prototype, "send")
+          .callsFake(() => {});
+
+        // Observe that processing happened once
         Cypress.sinon.spy(dropzone, "processFiles");
 
-        dropzone.addFile(mock1);
-        dropzone.addFile(mock2);
-        dropzone.addFile(mock3);
+        try {
+          dropzone.addFile(mock1);
+          dropzone.addFile(mock2);
+          dropzone.addFile(mock3);
 
-        return setTimeout(function () {
+          // Start the batch upload deterministically
+          dropzone.processQueue();
+
           expect(dropzone.processFiles.callCount).to.equal(1);
+
+          // All files should share the same XHR in uploadMultiple mode
+          expect(mock1.xhr).to.exist;
+          expect(mock1.xhr === mock2.xhr && mock2.xhr === mock3.xhr).to.be.ok;
 
           Cypress.sinon.spy(mock1.xhr, "abort");
 
           dropzone.cancelUpload(mock1);
 
-          expect(mock1.xhr === mock2.xhr && mock2.xhr === mock3.xhr).to.be.ok;
-
           expect(mock1.status).to.equal(Dropzone.CANCELED);
           expect(mock2.status).to.equal(Dropzone.CANCELED);
           expect(mock3.status).to.equal(Dropzone.CANCELED);
 
-          // The XHR should only be aborted once!
+          // The shared XHR should only be aborted once
           expect(mock1.xhr.abort.callCount).to.equal(1);
-
-          return done();
-        }, 10);
+        } finally {
+          sendStub.restore();
+        }
       });
     });
 
@@ -1071,14 +1085,16 @@ describe("Dropzone", function () {
       }));
 
     describe("getUploadingFiles()", () =>
-      it("should return all files with the status Dropzone.UPLOADING", function (done) {
-        let mock1 = getMockFile();
-        let mock2 = getMockFile();
-        let mock3 = getMockFile();
-        let mock4 = getMockFile();
+      it("should return all files with the status Dropzone.UPLOADING", function () {
+        const mock1 = getMockFile();
+        const mock2 = getMockFile();
+        const mock3 = getMockFile();
+        const mock4 = getMockFile();
 
         dropzone.options.accept = (file, _done) => (file.done = _done);
-        dropzone.uploadFile = function () {};
+
+        // Important: Dropzone uses uploadFiles(), keep uploads from completing
+        Cypress.sinon.stub(dropzone, "uploadFiles").callsFake(() => {});
 
         dropzone.addFile(mock1);
         dropzone.addFile(mock2);
@@ -1087,17 +1103,18 @@ describe("Dropzone", function () {
 
         expect(dropzone.getUploadingFiles()).to.deep.equal([]);
 
+        // Accept two files
         mock1.done();
         mock3.done();
 
-        return setTimeout(function () {
-          expect(dropzone.getUploadingFiles()).to.deep.equal([mock1, mock3]);
-          expect(mock1.status).to.equal(Dropzone.UPLOADING);
-          expect(mock3.status).to.equal(Dropzone.UPLOADING);
-          expect(mock2.status).to.equal(Dropzone.ADDED);
-          expect(mock4.status).to.equal(Dropzone.ADDED);
-          return done();
-        }, 10);
+        // Force processing now that files are accepted
+        dropzone.processQueue();
+
+        expect(dropzone.getUploadingFiles()).to.deep.equal([mock1, mock3]);
+        expect(mock1.status).to.equal(Dropzone.UPLOADING);
+        expect(mock3.status).to.equal(Dropzone.UPLOADING);
+        expect(mock2.status).to.equal(Dropzone.ADDED);
+        expect(mock4.status).to.equal(Dropzone.ADDED);
       }));
 
     describe("getActiveFiles()", () =>
@@ -1136,38 +1153,6 @@ describe("Dropzone", function () {
         expect(mock2.status).to.equal(Dropzone.ADDED);
         expect(mock4.status).to.equal(Dropzone.QUEUED);
       }));
-    /*
-      it("should return all files with the status Dropzone.UPLOADING or Dropzone.QUEUED", function (done) {
-        let mock1 = getMockFile();
-        let mock2 = getMockFile();
-        let mock3 = getMockFile();
-        let mock4 = getMockFile();
-
-        dropzone.options.accept = (file, _done) => (file.done = _done);
-        dropzone.uploadFile = function () {};
-        dropzone.options.parallelUploads = 2;
-
-        dropzone.addFile(mock1);
-        dropzone.addFile(mock2);
-        dropzone.addFile(mock3);
-        dropzone.addFile(mock4);
-
-        expect(dropzone.getActiveFiles()).to.deep.equal([]);
-
-        mock1.done();
-        mock3.done();
-        mock4.done();
-
-        return setTimeout(function () {
-          expect(dropzone.getActiveFiles()).to.deep.equal([mock1, mock3, mock4]);
-          expect(mock1.status).to.equal(Dropzone.UPLOADING);
-          expect(mock3.status).to.equal(Dropzone.UPLOADING);
-          expect(mock2.status).to.equal(Dropzone.ADDED);
-          expect(mock4.status).to.equal(Dropzone.QUEUED);
-          return done();
-        }, 10);
-      }));
-      */
 
     return describe("getFilesWithStatus()", () =>
       it("should return all files with provided status", function () {
@@ -1490,10 +1475,12 @@ describe("Dropzone", function () {
     });
 
     describe("uploadFiles()", function () {
+      let xhr;
       let requests;
 
       beforeEach(function () {
         requests = [];
+        xhr = Cypress.sinon.useFakeXMLHttpRequest();
 
         return (xhr.onCreate = (xhr) => requests.push(xhr));
       });
@@ -1511,7 +1498,7 @@ describe("Dropzone", function () {
         dropzone.uploadFile(mockFile);
 
         expect(dropzone.uploadFiles.callCount).to.equal(1);
-        return expect(dropzone.uploadFiles.calledWith([mockFile])).to.be.ok;
+        expect(dropzone.uploadFiles.calledWith([mockFile])).to.be.ok;
       });
       describe("with real XHR (cy.intercept)", function () {
         beforeEach(function () {
@@ -1519,38 +1506,39 @@ describe("Dropzone", function () {
           xhr.restore();
         });
         it("should use url options if strings", function () {
-          // Ensure the file is accepted
           dropzone.accept = (file, done) => done();
-
-          // Prevent Dropzone from starting the upload before we attach intercept + start the queue
           dropzone.options.autoProcessQueue = false;
 
           const method = String(
             dropzone.options.method || "post",
           ).toUpperCase();
-
           const urlPath = String(dropzone.options.url);
-          const urlGlob = urlPath.includes("://")
-            ? urlPath
-            : `**/${urlPath.replace(/^\/+/, "")}`;
 
-          cy.intercept({ method, url: urlGlob }, (req) => {
-            req.reply({ statusCode: 200, body: "" });
-          }).as("upload");
+          const OriginalXHR = window.XMLHttpRequest;
 
-          dropzone.addFile(mockFile);
+          const openSpy = Cypress.sinon.spy(OriginalXHR.prototype, "open");
+          const sendStub = Cypress.sinon
+            .stub(OriginalXHR.prototype, "send")
+            .callsFake(() => {});
 
-          // addFile() already queues the file (autoQueue default true); just start processing
-          dropzone.processQueue();
+          try {
+            dropzone.addFile(mockFile);
+            dropzone.processQueue();
 
-          cy.wait("@upload").then((interception) => {
-            expect(interception.request.method).to.equal(method);
-            expect(interception.request.url).to.match(
+            expect(openSpy.callCount).to.be.greaterThan(0);
+
+            // XHR.open(method, url, ...)
+            const [calledMethod, calledUrl] = openSpy.args[0];
+
+            expect(String(calledMethod).toUpperCase()).to.equal(method);
+            expect(String(calledUrl)).to.match(
               new RegExp(`${urlPath.replace(/^\/+/, "")}$`),
             );
-          });
+          } finally {
+            sendStub.restore();
+            openSpy.restore();
+          }
         });
-
         it("should call url options if functions", function () {
           const method = "PUT";
           const url = "/custom/upload/url";
@@ -1645,55 +1633,54 @@ describe("Dropzone", function () {
           dropzone.accept = (file, done) => done();
           dropzone.options.autoProcessQueue = false;
 
-          cy.window().then((win) => {
-            const OriginalXHR = win.XMLHttpRequest;
+          const OriginalXHR = window.XMLHttpRequest;
 
-            let xhr;
-            function WrappedXHR() {
-              xhr = new OriginalXHR();
-              return xhr;
-            }
-            WrappedXHR.prototype = OriginalXHR.prototype;
-            win.XMLHttpRequest = WrappedXHR;
+          let xhr;
+          function WrappedXHR() {
+            xhr = new OriginalXHR();
+            return xhr;
+          }
+          WrappedXHR.prototype = OriginalXHR.prototype;
 
-            try {
-              dropzone.addFile(mockFile);
-              dropzone.processQueue();
+          window.XMLHttpRequest = WrappedXHR;
 
-              expect(mockFile.status).to.equal(Dropzone.UPLOADING);
+          try {
+            dropzone.addFile(mockFile);
+            dropzone.processQueue();
 
-              // Prepare response-ish fields Dropzone might read
-              xhr.status = 200;
-              xhr.getResponseHeader = () => "text/plain";
-              xhr.responseText = "ok";
+            expect(mockFile.status).to.equal(Dropzone.UPLOADING);
 
-              const trigger = () => {
-                if (typeof xhr.onreadystatechange === "function")
-                  xhr.onreadystatechange();
-                else if (typeof xhr.onload === "function") xhr.onload();
-              };
+            // Prepare response-ish fields Dropzone might read
+            xhr.status = 200;
+            xhr.getResponseHeader = () => "text/plain";
+            xhr.responseText = "ok";
 
-              // Force readyState = 3 (non-final) and trigger callback
-              Object.defineProperty(xhr, "readyState", {
-                value: 3,
-                configurable: true,
-              });
-              trigger();
+            const trigger = () => {
+              if (typeof xhr.onreadystatechange === "function")
+                xhr.onreadystatechange();
+              else if (typeof xhr.onload === "function") xhr.onload();
+            };
 
-              expect(mockFile.status).to.equal(Dropzone.UPLOADING);
+            // Force readyState = 3 (non-final) and trigger callback
+            Object.defineProperty(xhr, "readyState", {
+              value: 3,
+              configurable: true,
+            });
+            trigger();
 
-              // Force readyState = 4 (final) and trigger callback
-              Object.defineProperty(xhr, "readyState", {
-                value: 4,
-                configurable: true,
-              });
-              trigger();
+            expect(mockFile.status).to.equal(Dropzone.UPLOADING);
 
-              expect(mockFile.status).to.equal(Dropzone.SUCCESS);
-            } finally {
-              win.XMLHttpRequest = OriginalXHR;
-            }
-          });
+            // Force readyState = 4 (final) and trigger callback
+            Object.defineProperty(xhr, "readyState", {
+              value: 4,
+              configurable: true,
+            });
+            trigger();
+
+            expect(mockFile.status).to.equal(Dropzone.SUCCESS);
+          } finally {
+            window.XMLHttpRequest = OriginalXHR;
+          }
         });
 
         it("should emit error and errormultiple when response was not OK", function () {
@@ -1830,13 +1817,35 @@ describe("Dropzone", function () {
 
       describe("settings()", function () {
         it("should correctly set `withCredentials` on the xhr object", function () {
-          dropzone.uploadFile(mockFile);
-          expect(requests.length).to.equal(1);
-          expect(requests[0].withCredentials).to.equal(false);
-          dropzone.options.withCredentials = true;
-          dropzone.uploadFile(mockFile);
-          expect(requests.length).to.equal(2);
-          return expect(requests[1].withCredentials).to.equal(true);
+          const OriginalXHR = window.XMLHttpRequest;
+
+          const openSpy = Cypress.sinon.spy(OriginalXHR.prototype, "open");
+          const sendStub = Cypress.sinon
+            .stub(OriginalXHR.prototype, "send")
+            .callsFake(() => {});
+
+          try {
+            // first upload: default is false
+            dropzone.options.withCredentials = false;
+            dropzone.uploadFile(mockFile);
+
+            expect(openSpy.callCount).to.be.greaterThan(0);
+            const xhr1 = openSpy.thisValues[0];
+            expect(xhr1).to.exist;
+            expect(xhr1.withCredentials).to.equal(false);
+
+            // second upload: set true
+            dropzone.options.withCredentials = true;
+            dropzone.uploadFile(mockFile);
+
+            expect(openSpy.callCount).to.be.greaterThan(1);
+            const xhr2 = openSpy.thisValues[1];
+            expect(xhr2).to.exist;
+            expect(xhr2.withCredentials).to.equal(true);
+          } finally {
+            sendStub.restore();
+            openSpy.restore();
+          }
         });
 
         it("should correctly override headers on the xhr object", function () {
@@ -1887,37 +1896,45 @@ describe("Dropzone", function () {
           }, 10);
         });
 
-        it("should properly use the paramName with [n] as file upload if uploadMultiple is true", function (done) {
+        it("should properly use the paramName with [n] as file upload if uploadMultiple is true", function () {
           dropzone.options.uploadMultiple = true;
           dropzone.options.paramName = "myName";
+
+          // Ensure the sending events actually fire
+          dropzone.accept = (file, done) => done();
 
           let formData = null;
           let sendingMultipleCount = 0;
           let sendingCount = 0;
-          dropzone.on("sending", (file, xhr, tformData) => sendingCount++);
+
+          dropzone.on("sending", () => {
+            sendingCount++;
+          });
+
           dropzone.on("sendingmultiple", function (files, xhr, tformData) {
             sendingMultipleCount++;
             formData = tformData;
-            return Cypress.sinon.spy(tformData, "append");
+            Cypress.sinon.spy(tformData, "append");
           });
 
-          let mock1 = getMockFile();
-          let mock2 = getMockFile();
+          const mock1 = getMockFile();
+          const mock2 = getMockFile();
 
+          // Add files so Dropzone knows about them (and will emit per-file events)
           dropzone.addFile(mock1);
           dropzone.addFile(mock2);
 
-          return setTimeout(function () {
-            expect(sendingCount).to.equal(2);
-            expect(sendingMultipleCount).to.equal(1);
-            dropzone.uploadFiles([mock1, mock2]);
-            expect(formData.append.callCount).to.equal(2);
-            expect(formData.append.args[0][0]).to.equal("myName[0]");
-            expect(formData.append.args[1][0]).to.equal("myName[1]");
-            return done();
-          }, 10);
-        });
+          // Trigger the multi-upload directly (no timers)
+          dropzone.uploadFiles([mock1, mock2]);
 
+          expect(sendingCount).to.equal(2);
+          expect(sendingMultipleCount).to.equal(1);
+
+          expect(formData).to.exist;
+          expect(formData.append.callCount).to.equal(2);
+          expect(formData.append.args[0][0]).to.equal("myName[0]");
+          expect(formData.append.args[1][0]).to.equal("myName[1]");
+        });
         it("should use resizeImage if dimensions are provided", function (done) {
           Cypress.sinon.stub(dropzone, "resizeImage");
           Cypress.sinon.stub(dropzone, "createThumbnail");
