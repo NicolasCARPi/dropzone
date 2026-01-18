@@ -902,7 +902,8 @@ export default class Dropzone extends Emitter {
       file.dataURL = fileReader.result;
 
       // Don't bother creating a thumbnail for SVG images since they're vector
-      if (file.type === "image/svg+xml") {
+      // Also skip gif (see #39)
+      if (file.type === "image/svg+xml" || file.type === "image/gif") {
         if (callback != null) {
           callback(fileReader.result);
         }
