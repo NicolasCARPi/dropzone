@@ -1507,9 +1507,9 @@ describe("Dropzone", function () {
           const url = "/custom/upload/url";
 
           dropzone.accept = (file, done) => done();
+          dropzone.options.autoProcessQueue = false;
 
           dropzone.options.method = Cypress.sinon.stub().callsFake((files) => {
-            // Dropzone passes an array of files here in this codebase
             expect(files).to.deep.equal([mockFile]);
             return method;
           });
@@ -1519,23 +1519,37 @@ describe("Dropzone", function () {
             return url;
           });
 
-          cy.intercept({ method, url: `**${url}` }, (req) => {
-            req.reply({ statusCode: 200, body: "" });
-          }).as("upload");
+          const openSpy = Cypress.sinon.spy(
+            window.XMLHttpRequest.prototype,
+            "open",
+          );
+          const sendStub = Cypress.sinon
+            .stub(window.XMLHttpRequest.prototype, "send")
+            .callsFake(() => {});
 
-          dropzone.addFile(mockFile);
-          dropzone.processFile(mockFile);
+          try {
+            dropzone.addFile(mockFile);
+            dropzone.processQueue();
 
-          cy.wait("@upload").then(() => {
+            // verify option functions were called
             expect(dropzone.options.method.callCount).to.equal(1);
             expect(dropzone.options.url.callCount).to.equal(1);
-
-            // If you prefer explicit Sinon asserts, these are fine too:
             Cypress.sinon.assert.calledWith(dropzone.options.method, [
               mockFile,
             ]);
             Cypress.sinon.assert.calledWith(dropzone.options.url, [mockFile]);
-          });
+
+            // verify request used returned method/url
+            expect(openSpy.callCount).to.be.greaterThan(0);
+            const [calledMethod, calledUrl] = openSpy.args[0];
+            expect(String(calledMethod).toUpperCase()).to.equal(method);
+            expect(String(calledUrl)).to.match(
+              new RegExp(`${url.replace(/^\/+/, "")}$`),
+            );
+          } finally {
+            sendStub.restore();
+            openSpy.restore();
+          }
         });
 
         it("should use the timeout option", function () {
@@ -1660,8 +1674,6 @@ describe("Dropzone", function () {
         });
         it("should emit error and errormultiple when response was not OK", function () {
           dropzone.options.uploadMultiple = true;
-
-          // Make sure the file is accepted and upload doesn't start before intercept is set
           dropzone.accept = (file, done) => done();
           dropzone.options.autoProcessQueue = false;
 
@@ -1675,27 +1687,42 @@ describe("Dropzone", function () {
           dropzone.on("complete", () => (complete = true));
           dropzone.on("completemultiple", () => (completemultiple = true));
 
-          // Force the upload request to fail
-          const method = String(
-            dropzone.options.method || "post",
-          ).toUpperCase();
-          const urlPath = String(dropzone.options.url);
-          const urlGlob = urlPath.includes("://")
-            ? urlPath
-            : `**/${urlPath.replace(/^\/+/, "")}`;
+          const sendStub = Cypress.sinon
+            .stub(window.XMLHttpRequest.prototype, "send")
+            .callsFake(function () {
+              Object.defineProperty(this, "status", {
+                configurable: true,
+                get() {
+                  return 400;
+                },
+              });
 
-          cy.intercept({ method, url: urlGlob }, (req) => {
-            req.reply({
-              statusCode: 400,
-              headers: { "content-type": "text/plain" },
-              body: "nope",
+              Object.defineProperty(this, "readyState", {
+                configurable: true,
+                get() {
+                  return 4;
+                },
+              });
+
+              Object.defineProperty(this, "responseText", {
+                configurable: true,
+                get() {
+                  return "nope";
+                },
+              });
+
+              this.getResponseHeader = () => "text/plain";
+
+              if (typeof this.onreadystatechange === "function")
+                this.onreadystatechange();
+              if (typeof this.onload === "function") this.onload();
+              if (typeof this.onloadend === "function") this.onloadend();
             });
-          }).as("upload");
 
-          dropzone.addFile(mockFile);
-          dropzone.processQueue();
+          try {
+            dropzone.addFile(mockFile);
+            dropzone.processQueue();
 
-          cy.wait("@upload").then(() => {
             expect(mockFile.status).to.equal(Dropzone.ERROR);
 
             expect(
@@ -1704,7 +1731,9 @@ describe("Dropzone", function () {
                 errormultiple === complete &&
                 complete === completemultiple,
             ).to.be.ok;
-          });
+          } finally {
+            sendStub.restore();
+          }
         });
       });
 
