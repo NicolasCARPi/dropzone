@@ -1837,18 +1837,48 @@ describe("Dropzone", function () {
 
         it("should correctly override headers on the xhr object", function () {
           dropzone.options.headers = { "Foo-Header": "foobar" };
-          dropzone.uploadFile(mockFile);
-          return expect(requests[0].requestHeaders["Foo-Header"]).to.equal(
-            "foobar",
-          );
-        });
 
+          const setHeaderSpy = Cypress.sinon.spy(
+            window.XMLHttpRequest.prototype,
+            "setRequestHeader",
+          );
+
+          // Prevent any real network / completion side effects
+          const sendStub = Cypress.sinon
+            .stub(window.XMLHttpRequest.prototype, "send")
+            .callsFake(() => {});
+
+          try {
+            dropzone.uploadFile(mockFile);
+
+            expect(setHeaderSpy.calledWith("Foo-Header", "foobar")).to.be.ok;
+          } finally {
+            sendStub.restore();
+            setHeaderSpy.restore();
+          }
+        });
         it("should not set headers on the xhr object that are empty", function () {
           dropzone.options.headers = { "X-Requested-With": null };
-          dropzone.uploadFile(mockFile);
-          return expect(Object.keys(requests[0].requestHeaders)).to.not.contain(
-            "X-Requested-With",
+
+          const setHeaderSpy = Cypress.sinon.spy(
+            window.XMLHttpRequest.prototype,
+            "setRequestHeader",
           );
+
+          // Prevent any real network / completion side effects
+          const sendStub = Cypress.sinon
+            .stub(window.XMLHttpRequest.prototype, "send")
+            .callsFake(() => {});
+
+          try {
+            dropzone.uploadFile(mockFile);
+
+            const headerNames = setHeaderSpy.args.map((a) => a[0]);
+            expect(headerNames).to.not.contain("X-Requested-With");
+          } finally {
+            sendStub.restore();
+            setHeaderSpy.restore();
+          }
         });
 
         it("should properly use the paramName without [n] as file upload if uploadMultiple is false", function (done) {
