@@ -1,6 +1,7 @@
 import Dropzone from "./dropzone";
 //import defaultPreviewTemplate from "bundle-text:./preview-template.html";
-import defaultPreviewTemplate from "./preview-template.html";
+//import defaultPreviewTemplate from "./preview-template.html?raw";
+import defaultPreviewTemplate from "./preview-template.js";
 
 let defaultOptions = {
   /**

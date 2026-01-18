@@ -592,23 +592,28 @@ describe("Dropzone", function () {
         });
       }));
 
-    describe(".cancelUpload()", function () {
-      it("should properly cancel upload if file currently uploading", function (done) {
-        let mockFile = getMockFile();
+    describe(".cancelUpload()", () => {
+      it("should properly cancel upload if file currently uploading", function () {
+        const mockFile = getMockFile();
 
         dropzone.accept = (file, done) => done();
 
+        // Keep the upload from completing so status stays UPLOADING
+        Cypress.sinon.stub(dropzone, "uploadFiles").callsFake(() => {});
+
         dropzone.addFile(mockFile);
 
-        return setTimeout(function () {
-          expect(mockFile.status).to.equal(Dropzone.UPLOADING);
-          expect(dropzone.getUploadingFiles()[0]).to.equal(mockFile);
-          dropzone.cancelUpload(mockFile);
-          expect(mockFile.status).to.equal(Dropzone.CANCELED);
-          expect(dropzone.getUploadingFiles().length).to.equal(0);
-          expect(dropzone.getQueuedFiles().length).to.equal(0);
-          return done();
-        }, 10);
+        // Force it into UPLOADING deterministically
+        dropzone.processFile(mockFile);
+
+        expect(mockFile.status).to.equal(Dropzone.UPLOADING);
+        expect(dropzone.getUploadingFiles()[0]).to.equal(mockFile);
+
+        dropzone.cancelUpload(mockFile);
+
+        expect(mockFile.status).to.equal(Dropzone.CANCELED);
+        expect(dropzone.getUploadingFiles().length).to.equal(0);
+        expect(dropzone.getQueuedFiles().length).to.equal(0);
       });
 
       it("should properly cancel the upload if file is not yet uploading", function () {
@@ -1586,161 +1591,160 @@ describe("Dropzone", function () {
           dropzone.accept = (file, done) => done();
           dropzone.options.timeout = 10000;
 
-          cy.window().then((win) => {
-            const OriginalXHR = win.XMLHttpRequest;
+          const OriginalXHR = window.XMLHttpRequest;
+          const openSpy = Cypress.sinon.spy(OriginalXHR.prototype, "open");
 
-            const openSpy = Cypress.sinon.spy(OriginalXHR.prototype, "open");
+          const xhrInstances = [];
+          function WrappedXHR() {
+            const xhr = new OriginalXHR();
+            xhrInstances.push(xhr);
+            return xhr;
+          }
+          WrappedXHR.prototype = OriginalXHR.prototype;
 
-            // Wrap XHR constructor so we can inspect instances
-            const xhrInstances = [];
-            function WrappedXHR() {
-              const xhr = new OriginalXHR();
-              xhrInstances.push(xhr);
-              return xhr;
-            }
-            WrappedXHR.prototype = OriginalXHR.prototype;
-            win.XMLHttpRequest = WrappedXHR;
+          window.XMLHttpRequest = WrappedXHR;
 
+          try {
             dropzone.addFile(mockFile);
             dropzone.processFile(mockFile);
 
             expect(openSpy.callCount).to.be.greaterThan(0);
             expect(xhrInstances.length).to.be.greaterThan(0);
             expect(xhrInstances[0].timeout).to.equal(10000);
-
-            // cleanup
-            win.XMLHttpRequest = OriginalXHR;
+          } finally {
+            window.XMLHttpRequest = OriginalXHR;
             openSpy.restore();
-          });
+          }
         });
 
         it("should properly handle if timeout is null", function () {
           dropzone.accept = (file, done) => done();
           dropzone.options.timeout = null;
 
-          // Prevent racing ahead before we wrap XHR
+          // Prevent racing ahead before we start the upload
           dropzone.options.autoProcessQueue = false;
 
-          cy.window().then((win) => {
-            const OriginalXHR = win.XMLHttpRequest;
-
-            const xhrInstances = [];
-            function WrappedXHR() {
-              const xhr = new OriginalXHR();
-              xhrInstances.push(xhr);
-              return xhr;
-            }
-            WrappedXHR.prototype = OriginalXHR.prototype;
-
-            win.XMLHttpRequest = WrappedXHR;
-
-            try {
-              dropzone.addFile(mockFile);
-              dropzone.processQueue(); // start upload deterministically
-
-              expect(xhrInstances.length).to.be.greaterThan(0);
-              expect(xhrInstances[0].timeout).to.equal(0);
-            } finally {
-              // cleanup (even if the test throws)
-              win.XMLHttpRequest = OriginalXHR;
-            }
-          });
-        });
-
-
-      it("should ignore the onreadystate callback if readyState != 4", function () {
-        dropzone.accept = (file, done) => done();
-        dropzone.options.autoProcessQueue = false;
-
-        cy.window().then((win) => {
-          const OriginalXHR = win.XMLHttpRequest;
-
-          let xhr;
-          function WrappedXHR() {
-            xhr = new OriginalXHR();
-            return xhr;
-          }
-          WrappedXHR.prototype = OriginalXHR.prototype;
-          win.XMLHttpRequest = WrappedXHR;
+          const OriginalXHR = window.XMLHttpRequest;
+          const openSpy = Cypress.sinon.spy(OriginalXHR.prototype, "open");
 
           try {
             dropzone.addFile(mockFile);
             dropzone.processQueue();
 
-            expect(mockFile.status).to.equal(Dropzone.UPLOADING);
+            expect(openSpy.callCount).to.be.greaterThan(0);
 
-            // Prepare response-ish fields Dropzone might read
-            xhr.status = 200;
-            xhr.getResponseHeader = () => "text/plain";
-            xhr.responseText = "ok";
-
-            const trigger = () => {
-              if (typeof xhr.onreadystatechange === "function") xhr.onreadystatechange();
-              else if (typeof xhr.onload === "function") xhr.onload();
-            };
-
-            // Force readyState = 3 (non-final) and trigger callback
-            Object.defineProperty(xhr, "readyState", { value: 3, configurable: true });
-            trigger();
-
-            expect(mockFile.status).to.equal(Dropzone.UPLOADING);
-
-            // Force readyState = 4 (final) and trigger callback
-            Object.defineProperty(xhr, "readyState", { value: 4, configurable: true });
-            trigger();
-
-            expect(mockFile.status).to.equal(Dropzone.SUCCESS);
+            const xhr0 = openSpy.thisValues[0];
+            expect(xhr0).to.exist;
+            expect(xhr0.timeout).to.equal(0);
           } finally {
-            win.XMLHttpRequest = OriginalXHR;
+            openSpy.restore();
           }
         });
-      });
 
-      it("should emit error and errormultiple when response was not OK", function () {
-        dropzone.options.uploadMultiple = true;
+        it("should ignore the onreadystate callback if readyState != 4", function () {
+          dropzone.accept = (file, done) => done();
+          dropzone.options.autoProcessQueue = false;
 
-        // Make sure the file is accepted and upload doesn't start before intercept is set
-        dropzone.accept = (file, done) => done();
-        dropzone.options.autoProcessQueue = false;
+          cy.window().then((win) => {
+            const OriginalXHR = win.XMLHttpRequest;
 
-        let error = false;
-        let errormultiple = false;
-        let complete = false;
-        let completemultiple = false;
+            let xhr;
+            function WrappedXHR() {
+              xhr = new OriginalXHR();
+              return xhr;
+            }
+            WrappedXHR.prototype = OriginalXHR.prototype;
+            win.XMLHttpRequest = WrappedXHR;
 
-        dropzone.on("error", () => (error = true));
-        dropzone.on("errormultiple", () => (errormultiple = true));
-        dropzone.on("complete", () => (complete = true));
-        dropzone.on("completemultiple", () => (completemultiple = true));
+            try {
+              dropzone.addFile(mockFile);
+              dropzone.processQueue();
 
-        // Force the upload request to fail
-        const method = String(dropzone.options.method || "post").toUpperCase();
-        const urlPath = String(dropzone.options.url);
-        const urlGlob = urlPath.includes("://") ? urlPath : `**/${urlPath.replace(/^\/+/, "")}`;
+              expect(mockFile.status).to.equal(Dropzone.UPLOADING);
 
-        cy.intercept({ method, url: urlGlob }, (req) => {
-          req.reply({
-            statusCode: 400,
-            headers: { "content-type": "text/plain" },
-            body: "nope",
+              // Prepare response-ish fields Dropzone might read
+              xhr.status = 200;
+              xhr.getResponseHeader = () => "text/plain";
+              xhr.responseText = "ok";
+
+              const trigger = () => {
+                if (typeof xhr.onreadystatechange === "function")
+                  xhr.onreadystatechange();
+                else if (typeof xhr.onload === "function") xhr.onload();
+              };
+
+              // Force readyState = 3 (non-final) and trigger callback
+              Object.defineProperty(xhr, "readyState", {
+                value: 3,
+                configurable: true,
+              });
+              trigger();
+
+              expect(mockFile.status).to.equal(Dropzone.UPLOADING);
+
+              // Force readyState = 4 (final) and trigger callback
+              Object.defineProperty(xhr, "readyState", {
+                value: 4,
+                configurable: true,
+              });
+              trigger();
+
+              expect(mockFile.status).to.equal(Dropzone.SUCCESS);
+            } finally {
+              win.XMLHttpRequest = OriginalXHR;
+            }
           });
-        }).as("upload");
+        });
 
-        dropzone.addFile(mockFile);
-        dropzone.processQueue();
+        it("should emit error and errormultiple when response was not OK", function () {
+          dropzone.options.uploadMultiple = true;
 
-        cy.wait("@upload").then(() => {
-          expect(mockFile.status).to.equal(Dropzone.ERROR);
+          // Make sure the file is accepted and upload doesn't start before intercept is set
+          dropzone.accept = (file, done) => done();
+          dropzone.options.autoProcessQueue = false;
 
-          expect(
-            true === error &&
-              error === errormultiple &&
-              errormultiple === complete &&
-              complete === completemultiple
-          ).to.be.ok;
+          let error = false;
+          let errormultiple = false;
+          let complete = false;
+          let completemultiple = false;
+
+          dropzone.on("error", () => (error = true));
+          dropzone.on("errormultiple", () => (errormultiple = true));
+          dropzone.on("complete", () => (complete = true));
+          dropzone.on("completemultiple", () => (completemultiple = true));
+
+          // Force the upload request to fail
+          const method = String(
+            dropzone.options.method || "post",
+          ).toUpperCase();
+          const urlPath = String(dropzone.options.url);
+          const urlGlob = urlPath.includes("://")
+            ? urlPath
+            : `**/${urlPath.replace(/^\/+/, "")}`;
+
+          cy.intercept({ method, url: urlGlob }, (req) => {
+            req.reply({
+              statusCode: 400,
+              headers: { "content-type": "text/plain" },
+              body: "nope",
+            });
+          }).as("upload");
+
+          dropzone.addFile(mockFile);
+          dropzone.processQueue();
+
+          cy.wait("@upload").then(() => {
+            expect(mockFile.status).to.equal(Dropzone.ERROR);
+
+            expect(
+              true === error &&
+                error === errormultiple &&
+                errormultiple === complete &&
+                complete === completemultiple,
+            ).to.be.ok;
+          });
         });
       });
-    });
 
       it("should include hidden files in the form and unchecked checkboxes and radiobuttons should be excluded", function (done) {
         let element = Dropzone.createElement(`<form action="/the/url">
