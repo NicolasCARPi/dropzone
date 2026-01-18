@@ -46,7 +46,6 @@ __metadata:
   resolution: "@deltablot/dropzone@workspace:."
   dependencies:
     "@parcel/core": "npm:^2.16.3"
-    "@parcel/transformer-inline-string": "npm:^2.16.3"
     "@parcel/transformer-sass": "npm:^2.16.3"
     "@swc/helpers": "npm:^0.5.18"
     cypress: "npm:^15.9.0"
@@ -861,15 +860,6 @@ __metadata:
   peerDependencies:
     "@parcel/core": ^2.16.3
   checksum: 10c0/5ae6a26305bc9f8a493d2c1f634707207bfb8f5bf28f7967d1733da3b8ed19c77dc9a557fe4e38527d9767ed8c8cbd17d97061566de47368f81fe941616507f8
-  languageName: node
-  linkType: hard
-
-"@parcel/transformer-inline-string@npm:^2.16.3":
-  version: 2.16.3
-  resolution: "@parcel/transformer-inline-string@npm:2.16.3"
-  dependencies:
-    "@parcel/plugin": "npm:2.16.3"
-  checksum: 10c0/f0973c5dbbd700b29fbdf15b44c0c23ed0cc3a4faebbb501d85f17af5de7f7345f0f5b895a0fa51386d1f04129f015c1a7e646514df8f49d1af9262a35568093
   languageName: node
   linkType: hard
 
