@@ -1129,23 +1129,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/webpack-preprocessor@npm:^7.0.2":
-  version: 7.0.2
-  resolution: "@cypress/webpack-preprocessor@npm:7.0.2"
-  dependencies:
-    bluebird: "npm:3.7.1"
-    debug: "npm:^4.3.4"
-    lodash: "npm:^4.17.20"
-    semver: "npm:^7.3.2"
-  peerDependencies:
-    "@babel/core": ^7.28.0
-    "@babel/preset-env": ^7.26.0
-    babel-loader: ^9 || ^10
-    webpack: ^5
-  checksum: 10c0/824bc5e6651673f5d431d2410325ea67df6145a172fe88fbe32548560fa38123c8fd963816f07c3e8378fe6d317f1b3ed07a5068d9f72e06c3eddce5abc3c25c
-  languageName: node
-  linkType: hard
-
 "@cypress/xvfb@npm:^1.2.4":
   version: 1.2.4
   resolution: "@cypress/xvfb@npm:1.2.4"
@@ -1162,7 +1145,6 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.28.6"
     "@babel/preset-env": "npm:^7.28.6"
-    "@cypress/webpack-preprocessor": "npm:^7.0.2"
     "@parcel/core": "npm:^2.16.3"
     "@parcel/transformer-inline-string": "npm:^2.16.3"
     "@parcel/transformer-sass": "npm:^2.16.3"
@@ -3091,13 +3073,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"bluebird@npm:3.7.1":
-  version: 3.7.1
-  resolution: "bluebird@npm:3.7.1"
-  checksum: 10c0/ed3aa4e0de2b794afa95deb78d868b832e51df5a3e4564da09a6a6a0956d46b6e3bfdc62f075230eed96347329bc5c70729d52b5d3d5c4fc118cf6db63574eb7
-  languageName: node
-  linkType: hard
-
 "bluebird@npm:^3.7.2":
   version: 3.7.2
   resolution: "bluebird@npm:3.7.2"
@@ -4880,7 +4855,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:^4.17.20, lodash@npm:^4.17.21":
+"lodash@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: 10c0/d8cbea072bb08655bb4c989da418994b073a608dffa608b09ac04b43a791b12aeae7cd7ad919aa4c925f33b48490b5cfe6c1f71d827956071dae2e7bb3a6b74c
@@ -5830,15 +5805,6 @@ __metadata:
   bin:
     semver: bin/semver.js
   checksum: 10c0/e3d79b609071caa78bcb6ce2ad81c7966a46a7431d9d58b8800cfa9cb6a63699b3899a0e4bcce36167a284578212d9ae6942b6929ba4aa5015c079a67751d42d
-  languageName: node
-  linkType: hard
-
-"semver@npm:^7.3.2":
-  version: 7.7.3
-  resolution: "semver@npm:7.7.3"
-  bin:
-    semver: bin/semver.js
-  checksum: 10c0/4afe5c986567db82f44c8c6faef8fe9df2a9b1d98098fc1721f57c696c4c21cebd572f297fc21002f81889492345b8470473bc6f4aff5fb032a6ea59ea2bc45e
   languageName: node
   linkType: hard
 

@@ -58,7 +58,6 @@
   "devDependencies": {
     "@babel/core": "^7.28.6",
     "@babel/preset-env": "^7.28.6",
-    "@cypress/webpack-preprocessor": "^7.0.2",
     "@parcel/core": "^2.16.3",
     "@parcel/transformer-inline-string": "^2.16.3",
     "@parcel/transformer-sass": "^2.16.3",
