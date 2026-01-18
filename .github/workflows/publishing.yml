@@ -2,6 +2,9 @@ name: publish
 on:
  release:
    types: [created]
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -11,7 +14,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
       - name: Enable Corepack
@@ -20,8 +23,5 @@ jobs:
         run: yarn install
       - name: Build dist files
         run: yarn run build
-      - name: Publish package
-        uses: JS-DevTools/npm-publish@v3
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          access: 'public'
+      - name: Publish
+        run: yarn npm publish
