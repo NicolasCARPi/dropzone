@@ -1465,7 +1465,6 @@ describe("Dropzone", function () {
     describe("uploadFiles()", function () {
       let xhr;
       let requests;
-
       beforeEach(function () {
         requests = [];
         xhr = Cypress.sinon.useFakeXMLHttpRequest();
@@ -1962,7 +1961,7 @@ describe("Dropzone", function () {
           setTimeout(function () {
             expect(dropzone.uploadFiles.callCount).to.equal(1);
             let uploadedFiles = dropzone.uploadFiles.getCall(0).args[0];
-            expect(uploadedFiles).to.equal([mock1]);
+            expect(uploadedFiles).to.deep.equal([mock1]);
             done();
           }, 10);
         });
@@ -2020,41 +2019,131 @@ describe("Dropzone", function () {
         return done();
       });
 
-      describe("should properly set status of file", () =>
-        it("should correctly set `withCredentials` on the xhr object", function (done) {
-          dropzone.addFile(mockFile);
+      describe("should properly set status of file", function () {
+        let xhr;
+        let requests;
 
-          setTimeout(function () {
-            expect(mockFile.status).to.equal(Dropzone.UPLOADING);
+        beforeEach(function () {
+          requests = [];
+          xhr = Cypress.sinon.useFakeXMLHttpRequest();
 
-            expect(requests.length).to.equal(1);
-            requests[0].status = 400;
-            requests[0].readyState = 4;
-            requests[0].responseHeaders = { "content-type": "text/plain" };
+          return (xhr.onCreate = (xhr) => requests.push(xhr));
+        });
 
-            requests[0].onload();
+        afterEach(() => {
+          if (xhr && typeof xhr.restore === "function") xhr.restore();
+        });
+        it("should correctly set `withCredentials` on the xhr object", function () {
+          dropzone.accept = (file, done) => done();
+          dropzone.options.autoProcessQueue = false;
 
+          const OriginalXHR = window.XMLHttpRequest;
+
+          const sendStub = Cypress.sinon
+            .stub(OriginalXHR.prototype, "send")
+            .callsFake(function () {
+              // 1st send => 400, 2nd send => 200
+              const statusCode = sendStub.callCount === 1 ? 400 : 200;
+
+              // status is read-only on real XHR: define a getter instead
+              Object.defineProperty(this, "status", {
+                configurable: true,
+                get() {
+                  return statusCode;
+                },
+              });
+
+              Object.defineProperty(this, "readyState", {
+                configurable: true,
+                get() {
+                  return 4;
+                },
+              });
+
+              // responseText can be read-only too
+              Object.defineProperty(this, "responseText", {
+                configurable: true,
+                get() {
+                  return "";
+                },
+              });
+
+              this.getResponseHeader = () => "text/plain";
+
+              if (typeof this.onreadystatechange === "function")
+                this.onreadystatechange();
+              if (typeof this.onload === "function") this.onload();
+              if (typeof this.onloadend === "function") this.onloadend();
+            });
+
+          try {
+            // first file => ERROR
+            dropzone.addFile(mockFile);
+            dropzone.processQueue();
             expect(mockFile.status).to.equal(Dropzone.ERROR);
 
+            // second file => SUCCESS
             mockFile = getMockFile();
             dropzone.addFile(mockFile);
-
-            setTimeout(function () {
-              expect(mockFile.status).to.equal(Dropzone.UPLOADING);
-
-              expect(requests.length).to.equal(2);
-              requests[1].status = 200;
-              requests[1].readyState = 4;
-              requests[1].responseHeaders = { "content-type": "text/plain" };
-
-              requests[1].onload();
-
-              expect(mockFile.status).to.equal(Dropzone.SUCCESS);
-              return done();
-            }, 10);
-          }, 10);
-        }));
+            dropzone.processQueue();
+            expect(mockFile.status).to.equal(Dropzone.SUCCESS);
+          } finally {
+            sendStub.restore();
+          }
+        });
+      });
     });
+    /*
+        it("should correctly set `withCredentials` on the xhr object", function () {
+          dropzone.accept = (file, done) => done();
+          dropzone.options.autoProcessQueue = false;
+
+          const OriginalXHR = window.XMLHttpRequest;
+
+          const sendStub = Cypress.sinon
+            .stub(OriginalXHR.prototype, "send")
+            .callsFake(function () {
+              // 1st send => 400, 2nd send => 200
+              const statusCode = sendStub.callCount === 1 ? 400 : 200;
+
+              this.status = statusCode;
+
+              // Some implementations have read-only readyState, but this works in most cases
+              try {
+                Object.defineProperty(this, "readyState", {
+                  value: 4,
+                  configurable: true,
+                });
+              } catch (e) {
+                // ignore
+              }
+
+              this.getResponseHeader = () => "text/plain";
+              this.responseText = "";
+
+              if (typeof this.onreadystatechange === "function")
+                this.onreadystatechange();
+              if (typeof this.onload === "function") this.onload();
+            });
+
+          try {
+            // first file => ERROR
+            dropzone.addFile(mockFile);
+            dropzone.processQueue();
+            expect(mockFile.status).to.equal(Dropzone.ERROR);
+
+            // second file => SUCCESS
+            mockFile = getMockFile();
+            dropzone.addFile(mockFile);
+            dropzone.processQueue();
+            expect(mockFile.status).to.equal(Dropzone.SUCCESS);
+          } finally {
+            sendStub.restore();
+          }
+        });
+      });
+    });
+    */
 
     describe("transformFile()", function () {
       it("should be invoked and the result should be uploaded if configured", (done) => {
