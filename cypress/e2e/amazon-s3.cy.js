@@ -4,7 +4,7 @@ describe("Amazon S3 Support", function () {
   const getMockFile = (
     type = "text/html",
     filename = "test file name",
-    contents = ["file contents"]
+    contents = ["file contents"],
   ) => {
     const file = new File(contents, filename, { type });
     file.status = Dropzone.ADDED;
@@ -59,38 +59,34 @@ describe("Amazon S3 Support", function () {
     it("should add proper Content-Type", function () {
       const seen = [];
 
-      cy.intercept({ url: "**/url" }, (req) => {
+      cy.intercept("**/url", (req) => {
+        // Cypress normalizes header keys to lowercase
+        seen.push(req.headers["content-type"] || req.headers["Content-Type"]);
         req.reply({ statusCode: 200, body: "" });
       }).as("upload");
 
-      dropzone.addFile(getMockFile());
-      dropzone.addFile(getMockFile("image/jpeg", "some-file.jpg", [[1, 2, 3]]));
-
-      // Start uploads after intercept is in place
-      dropzone.processQueue();
-
-      cy.wait("@upload").then((i1) => {
-        seen.push(i1);
-      });
-
-      cy.wait("@upload").then((i2) => {
-        seen.push(i2);
-      });
-
+      // IMPORTANT: run Dropzone actions only after intercept is registered
       cy.then(() => {
-        const contentTypes = seen
-          .map((i) => {
-            const headers = i.request && i.request.headers ? i.request.headers : {};
-            // Cypress normalizes header keys to lowercase
-            return headers["content-type"] || headers["Content-Type"];
-          })
-          .filter(Boolean)
-          .sort();
-
-        expect(contentTypes).to.deep.equal(
-          ["text/html", "image/jpeg"].sort()
+        dropzone.addFile(getMockFile());
+        dropzone.addFile(
+          getMockFile("image/jpeg", "some-file.jpg", [[1, 2, 3]]),
         );
+        dropzone.processQueue();
       });
+
+      // wait for two requests
+      cy.wait("@upload");
+      cy.wait("@upload");
+
+      // assert after both requests happened
+      cy.wrap(seen)
+        .should("have.length", 2)
+        .then(() => {
+          const contentTypes = seen.filter(Boolean).sort();
+          expect(contentTypes).to.deep.equal(
+            ["image/jpeg", "text/html"].sort(),
+          );
+        });
     });
   });
 });
