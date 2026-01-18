@@ -1,5 +1,9 @@
 # Changelog for dropzone
 
+## 7.4.3
+
+* dev: bump all dependencies to latest version
+
 ## 7.4.2
 
 * dev: move all tests to Cypress, remove many devDependencies (#48)
