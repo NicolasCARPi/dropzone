@@ -237,7 +237,7 @@ describe("Dropzone", function () {
       let msg = Dropzone.createElement('<div class="dz-message">TEST</div>');
       element.appendChild(msg);
 
-      let dropzone = new Dropzone(element, {
+      new Dropzone(element, {
         clickable: true,
         acceptParameter: null,
       });
@@ -748,30 +748,6 @@ describe("Dropzone", function () {
         expect(dropzone.disable.callCount).to.equal(1);
         expect(element).to.not.have.property("dropzone");
       });
-      /*
-      it("should properly cancel all pending uploads and remove all file references", function (done) {
-        dropzone.accept = (file, done) => done();
-
-        dropzone.options.parallelUploads = 1;
-
-        dropzone.addFile(getMockFile());
-        dropzone.addFile(getMockFile());
-
-        return setTimeout(function () {
-          expect(dropzone.getUploadingFiles().length).to.equal(1);
-          expect(dropzone.getQueuedFiles().length).to.equal(1);
-          expect(dropzone.files.length).to.equal(2);
-
-          Cypress.sinon.spy(dropzone, "disable");
-
-          dropzone.destroy();
-
-          expect(dropzone.disable.callCount).to.equal(1);
-          expect(element).to.not.have.property("dropzone");
-          return done();
-        }, 10);
-      });
-      */
 
       it("should be able to create instance of dropzone on the same element after destroy", function () {
         dropzone.destroy();
@@ -1637,15 +1613,28 @@ describe("Dropzone", function () {
 
             expect(mockFile.status).to.equal(Dropzone.UPLOADING);
 
-            // Prepare response-ish fields Dropzone might read
-            xhr.status = 200;
+            // Prepare response-ish fields Dropzone might read (read-only on real XHR => define getters)
+            Object.defineProperty(xhr, "status", {
+              configurable: true,
+              get() {
+                return 200;
+              },
+            });
+
+            Object.defineProperty(xhr, "responseText", {
+              configurable: true,
+              get() {
+                return "ok";
+              },
+            });
+
             xhr.getResponseHeader = () => "text/plain";
-            xhr.responseText = "ok";
 
             const trigger = () => {
               if (typeof xhr.onreadystatechange === "function")
                 xhr.onreadystatechange();
               else if (typeof xhr.onload === "function") xhr.onload();
+              if (typeof xhr.onloadend === "function") xhr.onloadend();
             };
 
             // Force readyState = 3 (non-final) and trigger callback
@@ -1669,7 +1658,6 @@ describe("Dropzone", function () {
             window.XMLHttpRequest = OriginalXHR;
           }
         });
-
         it("should emit error and errormultiple when response was not OK", function () {
           dropzone.options.uploadMultiple = true;
 
@@ -2123,57 +2111,6 @@ describe("Dropzone", function () {
         });
       });
     });
-    /*
-        it("should correctly set `withCredentials` on the xhr object", function () {
-          dropzone.accept = (file, done) => done();
-          dropzone.options.autoProcessQueue = false;
-
-          const OriginalXHR = window.XMLHttpRequest;
-
-          const sendStub = Cypress.sinon
-            .stub(OriginalXHR.prototype, "send")
-            .callsFake(function () {
-              // 1st send => 400, 2nd send => 200
-              const statusCode = sendStub.callCount === 1 ? 400 : 200;
-
-              this.status = statusCode;
-
-              // Some implementations have read-only readyState, but this works in most cases
-              try {
-                Object.defineProperty(this, "readyState", {
-                  value: 4,
-                  configurable: true,
-                });
-              } catch (e) {
-                // ignore
-              }
-
-              this.getResponseHeader = () => "text/plain";
-              this.responseText = "";
-
-              if (typeof this.onreadystatechange === "function")
-                this.onreadystatechange();
-              if (typeof this.onload === "function") this.onload();
-            });
-
-          try {
-            // first file => ERROR
-            dropzone.addFile(mockFile);
-            dropzone.processQueue();
-            expect(mockFile.status).to.equal(Dropzone.ERROR);
-
-            // second file => SUCCESS
-            mockFile = getMockFile();
-            dropzone.addFile(mockFile);
-            dropzone.processQueue();
-            expect(mockFile.status).to.equal(Dropzone.SUCCESS);
-          } finally {
-            sendStub.restore();
-          }
-        });
-      });
-    });
-    */
 
     describe("transformFile()", function () {
       it("should be invoked and the result should be uploaded if configured", (done) => {
