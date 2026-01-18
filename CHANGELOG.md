@@ -1,5 +1,20 @@
 # Changelog for dropzone
 
+## 7.4.2
+
+* dev: move all tests to Cypress, remove many devDependencies (#48)
+* bump: force install of brace-expansion 2.0.2
+
+## 7.4.1
+
+* ci: fix publish workflow
+
+## 7.4.0
+
+* bug/minor: gif: prevent gifs from being truncated to first frame (#46) fix #39
+* ci: try trusted publishing with OIDC (see https://github.blog/changelog/2025-07-31-npm-trusted-publishing-with-oidc-is-generally-available/)
+* chore: update dependencies (#45)
+
 ## 7.3.1
 
 * bug/minor: ux: avoid displaying empty confirm on cancel action (by spatarel in #42)
