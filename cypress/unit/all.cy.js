@@ -15,11 +15,6 @@ describe("Dropzone", function () {
     return file;
   };
 
-  /*
-  let xhr = null;
-  beforeEach(() => (xhr = Cypress.sinon.useFakeXMLHttpRequest()));
-  */
-
   describe("constructor()", function () {
     let dropzone = null;
 
@@ -464,15 +459,9 @@ describe("Dropzone", function () {
   });
 
   describe("instance", function () {
-    let xhr;
     let element = null;
     let dropzone = null;
-    let requests = null;
     beforeEach(function () {
-      requests = [];
-      xhr = Cypress.sinon.useFakeXMLHttpRequest();
-      xhr.onCreate = (xhr) => requests.push(xhr);
-
       element = Dropzone.createElement("<div></div>");
       document.body.appendChild(element);
       return (dropzone = new Dropzone(element, {
@@ -486,7 +475,6 @@ describe("Dropzone", function () {
     afterEach(function () {
       document.body.removeChild(element);
       dropzone.destroy();
-      xhr.restore();
     });
 
     describe(".accept()", function () {
@@ -2032,7 +2020,7 @@ describe("Dropzone", function () {
         return done();
       });
 
-      return describe("should properly set status of file", () =>
+      describe("should properly set status of file", () =>
         it("should correctly set `withCredentials` on the xhr object", function (done) {
           dropzone.addFile(mockFile);
 

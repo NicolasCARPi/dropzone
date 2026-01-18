@@ -12,3 +12,5 @@
 // You can read more here:
 // https://on.cypress.io/configuration
 // ***********************************************************
+globalThis.sleep = (delay) =>
+  new Promise((resolve) => setTimeout(resolve, delay));
