@@ -1,6 +1,4 @@
 import Dropzone from "./dropzone";
-//import defaultPreviewTemplate from "bundle-text:./preview-template.html";
-//import defaultPreviewTemplate from "./preview-template.html?raw";
 import defaultPreviewTemplate from "./preview-template.js";
 
 let defaultOptions = {
@@ -612,7 +610,7 @@ let defaultOptions = {
 
     if (this.previewsContainer && !this.options.disablePreviews) {
       file.previewElement = Dropzone.createElement(
-        this.options.previewTemplate
+        this.options.previewTemplate.trim()
       );
       file.previewTemplate = file.previewElement; // Backwards compatibility
 

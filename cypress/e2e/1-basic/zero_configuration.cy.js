@@ -3,16 +3,6 @@
 describe("Dropzone with zero configuration", () => {
   beforeEach(() => {
     cy.visit("/1-basic/zero_configuration.html");
-
-    // Patch the already auto-created Dropzone instance
-    cy.window().then((win) => {
-      const dz = win.Dropzone?.instances?.[0];
-      expect(dz, "Dropzone instance").to.exist;
-
-      if (typeof dz.options.previewTemplate === "string") {
-        dz.options.previewTemplate = dz.options.previewTemplate.trim();
-      }
-    });
   });
 
   it("uploads single file", () => {
