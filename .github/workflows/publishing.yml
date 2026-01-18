@@ -24,4 +24,4 @@ jobs:
       - name: Build dist files
         run: yarn run build
       - name: Publish
-        run: yarn npm publish
+        run: npm publish
