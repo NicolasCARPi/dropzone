@@ -53,6 +53,7 @@
     "@swc/helpers": "^0.5.18"
   },
   "resolutions": {
+    "brace-expansion": "2.0.2",
     "tar": "7.5.3"
   },
   "devDependencies": {
