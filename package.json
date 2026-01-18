@@ -25,10 +25,6 @@
     "standalone": {
       "source": "tool/dropzone-global.js",
       "outputFormat": "global"
-    },
-    "built-test": {
-      "source": "test/unit-tests.js",
-      "distDir": "test/built/"
     }
   },
   "maintainers": [
