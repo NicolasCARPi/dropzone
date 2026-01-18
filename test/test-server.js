@@ -12,13 +12,13 @@ app.use(express.static(path.join(__dirname, 'test-sites')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Handle all POST requests
-app.post('*', (_, res) => {
+app.post('{*splat}', (_, res) => {
   // Send a success response
   res.json({ success: true });
 });
 
 // Handle all PUT requests
-app.put('*', (req, res) => {
+app.put('{*splat}', (req, res) => {
   // Special handling for URLs that start with `/amazon-multipart-upload`
   if (req.path.startsWith('/amazon-multipart-upload')) {
     const etag = `"${Math.round(Math.random() * 10000)}"`;
