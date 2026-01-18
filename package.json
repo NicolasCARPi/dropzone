@@ -61,9 +61,9 @@
     "@parcel/transformer-inline-string": "^2.16.3",
     "@parcel/transformer-sass": "^2.16.3",
     "cypress": "^15.9.0",
-    "express": "^4.21.2",
+    "express": "^5.2.1",
     "parcel": "^2.16.3",
-    "sass": "^1.79.3"
+    "sass": "^1.97.2"
   },
-  "packageManager": "yarn@4.5.3"
+  "packageManager": "yarn@4.12.0"
 }
