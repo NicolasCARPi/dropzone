@@ -24,15 +24,12 @@ jobs:
       - name: Build
         run: yarn run build
 
-      - name: Run test
-        run: yarn run test
-
       - uses: cypress-io/github-action@v6
         with:
           install-command : yarn install --immutable --immutable-cache
           # fix issue with "Cannot find module 'cypress'"
           # https://github.com/cypress-io/github-action/issues/430#issuecomment-949936528
-          command: yarn test:e2e
+          command: yarn run test
           start: yarn start-test-server
           wait-on: "http://localhost:8888"
           wait-on-timeout: 5

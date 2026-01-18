@@ -1,3 +1,4 @@
+export default `
 <div class="dz-preview dz-file-preview">
   <div class="dz-image"><img data-dz-thumbnail /></div>
   <div class="dz-details">
@@ -34,4 +35,4 @@
       />
     </svg>
   </div>
-</div>
+</div>`;
