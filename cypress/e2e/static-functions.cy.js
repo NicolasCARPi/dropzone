@@ -246,23 +246,26 @@ describe("Static functions", function () {
     });
   });
 
-
   describe("Dropzone.confirm", function () {
+  let originalConfirm;
   let confirmStub;
 
   beforeEach(function () {
-    cy.window().then((win) => {
-      confirmStub = cy.stub(win, "confirm");
+    originalConfirm = window.confirm;
+
+    confirmStub = Cypress.sinon.stub();
+
+    Object.defineProperty(window, "confirm", {
+      configurable: true,
+      value: confirmStub,
     });
   });
 
   afterEach(function () {
-    // cy.stub() will restore automatically between tests in many setups,
-    // but make it explicit and safe:
-    if (confirmStub && typeof confirmStub.restore === "function") {
-      confirmStub.restore();
-    }
-    confirmStub = null;
+    Object.defineProperty(window, "confirm", {
+      configurable: true,
+      value: originalConfirm,
+    });
   });
 
   it("should forward to window.confirm and call the callbacks accordingly", function () {
@@ -270,6 +273,7 @@ describe("Static functions", function () {
     let rejected = false;
 
     confirmStub.returns(true);
+
     Dropzone.confirm(
       "test question",
       () => (accepted = true),
@@ -284,6 +288,7 @@ describe("Static functions", function () {
     rejected = false;
 
     confirmStub.returns(false);
+
     Dropzone.confirm(
       "test question 2",
       () => (accepted = true),
@@ -300,6 +305,7 @@ describe("Static functions", function () {
     let rejected = false;
 
     confirmStub.returns(false);
+
     Dropzone.confirm("test question", () => (accepted = true));
 
     expect(confirmStub.args[0][0]).to.equal("test question");
@@ -307,6 +313,7 @@ describe("Static functions", function () {
     expect(rejected).to.equal(false);
   });
 });
+
 
   describe("Dropzone.getElement() / getElements()", function () {
     let tmpElements = [];
