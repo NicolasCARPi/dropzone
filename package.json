@@ -54,7 +54,7 @@
   },
   "resolutions": {
     "brace-expansion": "2.0.2",
-    "tar": "7.5.3"
+    "tar": "^7.5.4"
   },
   "devDependencies": {
     "@parcel/core": "^2.16.3",
