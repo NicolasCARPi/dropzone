@@ -597,18 +597,79 @@ export default class Dropzone extends Emitter {
       files[i] = e.dataTransfer.files[i];
     }
 
-    // Even if it's a folder, files.length will contain the folders.
-    if (files.length) {
-      let { items } = e.dataTransfer;
-      if (items && items.length && items[0].webkitGetAsEntry != null) {
-        // The browser supports dropping of folders, so handle items instead of files
-        this._addFilesFromItems(items);
-      } else {
-        this.handleFiles(files);
+    let { items } = e.dataTransfer;
+    let hasDirectoryItems = this._hasDirectoryItems(items);
+    let addFiles = (files) => {
+      // Even if it's a folder, files.length will contain the folders.
+      if (files.length) {
+        if (hasDirectoryItems) {
+          // The browser supports dropping of folders, so handle items instead of files
+          this._addFilesFromItems(items);
+        } else {
+          this.handleFiles(files);
+        }
+      }
+
+      this.emit("addedfiles", files);
+    };
+
+    if (
+      !files.length ||
+      hasDirectoryItems ||
+      !Dropzone.shouldRehydrateDroppedFiles()
+    ) {
+      return addFiles(files);
+    }
+
+    return this._rehydrateDroppedFiles(files, addFiles);
+  }
+
+  _hasDirectoryItems(items) {
+    if (!items || !items.length || items[0].webkitGetAsEntry == null) {
+      return false;
+    }
+
+    for (let item of items) {
+      let entry = item.webkitGetAsEntry != null ? item.webkitGetAsEntry() : null;
+      if (entry && entry.isDirectory) {
+        return true;
       }
     }
 
-    this.emit("addedfiles", files);
+    return false;
+  }
+
+  _rehydrateDroppedFiles(files, done) {
+    let rehydratedFiles = [];
+    let remainingFiles = files.length;
+
+    let finishFile = (index, file) => {
+      rehydratedFiles[index] = file;
+      if (--remainingFiles === 0) {
+        done(rehydratedFiles);
+      }
+    };
+
+    for (let i = 0; i < files.length; i++) {
+      let file = files[i];
+      let reader = new FileReader();
+
+      reader.onload = () => {
+        let rehydratedFile = file;
+        try {
+          rehydratedFile = new File([reader.result], file.name, {
+            type: file.type,
+            lastModified: file.lastModified,
+          });
+        } catch (error) {
+          rehydratedFile = file;
+        }
+        finishFile(i, rehydratedFile);
+      };
+
+      reader.onerror = () => finishFile(i, file);
+      reader.readAsArrayBuffer(file);
+    }
   }
 
   paste(e) {
@@ -1801,6 +1862,25 @@ Dropzone.discover = function () {
 // Checks if the browser is supported by simply checking if Promise is here: a good cutoff
 Dropzone.isBrowserSupported = function () {
   return typeof Promise !== "undefined";
+};
+
+Dropzone.shouldRehydrateDroppedFiles = function () {
+  if (typeof FileReader === "undefined" || typeof File === "undefined") {
+    return false;
+  }
+
+  let userAgent = navigator.userAgent || "";
+  let vendor = navigator.vendor || "";
+  let platform = navigator.platform || "";
+  let isIOS =
+    /iP(ad|hone|od)/.test(userAgent) ||
+    (platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  let isSafari =
+    /Apple Computer/.test(vendor) &&
+    /Safari/.test(userAgent) &&
+    !/(Chrome|Chromium|CriOS|FxiOS|EdgiOS|OPiOS)/.test(userAgent);
+
+  return isIOS || isSafari;
 };
 
 Dropzone.dataURItoBlob = function (dataURI) {
