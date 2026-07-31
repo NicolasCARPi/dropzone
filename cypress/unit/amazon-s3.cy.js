@@ -46,7 +46,7 @@ describe("Amazon S3 Support", function () {
       document.body.appendChild(element);
 
       dropzone = new Dropzone(element, {
-        url: "url",
+        url: "/url",
         binaryBody: true,
         uploadprogress() {},
       });
@@ -59,7 +59,7 @@ describe("Amazon S3 Support", function () {
     it("should add proper Content-Type", function () {
       const seen = [];
 
-      cy.intercept("**/url", (req) => {
+      cy.intercept("POST", "/url", (req) => {
         // Cypress normalizes header keys to lowercase
         seen.push(req.headers["content-type"] || req.headers["Content-Type"]);
         req.reply({ statusCode: 200, body: "" });
