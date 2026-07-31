@@ -1,6 +1,6 @@
 {
   "name": "@deltablot/dropzone",
-  "version": "7.4.3",
+  "version": "7.4.4",
   "description": "Handles drag and drop of files for you.",
   "keywords": [
     "dragndrop",
@@ -50,19 +50,19 @@
     "url": "https://github.com/NicolasCARPi/dropzone.git"
   },
   "dependencies": {
-    "@swc/helpers": "^0.5.18"
+    "@swc/helpers": "^0.5.23"
   },
   "resolutions": {
     "brace-expansion": "2.0.2",
     "tar": "^7.5.4"
   },
   "devDependencies": {
-    "@parcel/core": "^2.16.3",
-    "@parcel/transformer-sass": "^2.16.3",
-    "cypress": "^15.9.0",
+    "@parcel/core": "^2.16.4",
+    "@parcel/transformer-sass": "^2.16.4",
+    "cypress": "^15.19.0",
     "express": "^5.2.1",
-    "parcel": "^2.16.3",
-    "sass": "^1.97.2"
+    "parcel": "^2.16.4",
+    "sass": "^1.102.0"
   },
   "packageManager": "yarn@4.12.0"
 }
